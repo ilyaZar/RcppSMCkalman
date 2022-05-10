@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 rcppsmc_logNormWeightsCpp <- function(logWeights) {
-    .Call(`_RcppSMCkalmanFilter_rcppsmc_logNormWeightsCpp`, logWeights)
+    .Call(`_RcppSMCkalman_rcppsmc_logNormWeightsCpp`, logWeights)
 }
 

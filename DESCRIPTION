@@ -1,4 +1,4 @@
-Package: RcppSMCkalmanFilter
+Package: RcppSMCkalman
 Type: Package
 Title: Kalman Filtering and Backward Simulation via RcppSMC
 Version: 1.0
@@ -11,5 +11,5 @@ License: GPL (>= 2)
 Suggests: tinytest
 Encoding: UTF-8
 RoxygenNote: 7.1.2
-Imports: Rcpp (>= 1.0.8.3)
+Imports: Rcpp (>= 1.0.8.3), mvtnorm
 LinkingTo: Rcpp, RcppArmadillo, RcppSMC

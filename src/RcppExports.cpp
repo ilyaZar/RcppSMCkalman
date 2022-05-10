@@ -14,7 +14,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // rcppsmc_logNormWeightsCpp
 Rcpp::List rcppsmc_logNormWeightsCpp(arma::vec logWeights);
-RcppExport SEXP _RcppSMCkalmanFilter_rcppsmc_logNormWeightsCpp(SEXP logWeightsSEXP) {
+RcppExport SEXP _RcppSMCkalman_rcppsmc_logNormWeightsCpp(SEXP logWeightsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -25,11 +25,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RcppSMCkalmanFilter_rcppsmc_logNormWeightsCpp", (DL_FUNC) &_RcppSMCkalmanFilter_rcppsmc_logNormWeightsCpp, 1},
+    {"_RcppSMCkalman_rcppsmc_logNormWeightsCpp", (DL_FUNC) &_RcppSMCkalman_rcppsmc_logNormWeightsCpp, 1},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_RcppSMCkalmanFilter(DllInfo *dll) {
+RcppExport void R_init_RcppSMCkalman(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

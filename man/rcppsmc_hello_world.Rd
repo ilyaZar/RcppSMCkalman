@@ -28,7 +28,7 @@ rcppsmc_logNormWeightsCpp(logWeights)
 }
 \examples{
   logWeightVec <- -1 * sqrt(1:4)
-  rcppsmc_logNormWeightsCpp(logWeightVec)
+  # rcppsmc_logNormWeightsCpp(logWeightVec)
 }
 \author{Dirk Eddelbuettel, Adam Johansen, Leah F. South, Ilya Zarubin}
 
