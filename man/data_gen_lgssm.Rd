@@ -2,7 +2,7 @@
 % Please edit documentation in R/00_kf_helpers.R
 \name{data_gen_lgssm}
 \alias{data_gen_lgssm}
-\title{Generates data from a multivariate LGSSM.}
+\title{Generates simulated data from a multivariate LGSSM.}
 \usage{
 data_gen_lgssm(TT, dim_x = 1, dim_y = 1, A, B, C, D, Q, R, initX)
 }
@@ -46,5 +46,5 @@ a named list of 7:
   }
 }
 \description{
-Generates data from a multivariate LGSSM.
+Generates simulated data from a multivariate LGSSM.
 }

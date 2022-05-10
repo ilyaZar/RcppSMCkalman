@@ -6,10 +6,10 @@ Date: 2022-05-05
 Author: Ilya Zarubin
 Maintainer: IlyaZar <zarubin@wiso.uni-koeln.de>
 Description: More details about what the package does. See
-         <https://github.com/ilyaZar/RcppSMCkalmanFilter>.
+         <https://github.com/ilyaZar/RcppSMCkalman>.
 License: GPL (>= 2)
 Suggests: tinytest
 Encoding: UTF-8
 RoxygenNote: 7.1.2
-Imports: Rcpp (>= 1.0.8.3), mvtnorm
+Imports: Rcpp (>= 1.0.8.3), mvtnorm, matrixcalc
 LinkingTo: Rcpp, RcppArmadillo, RcppSMC
