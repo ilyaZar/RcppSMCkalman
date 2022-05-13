@@ -83,22 +83,33 @@
 #'   latent states is used (see \code{Details}).
 #' @param initU Initial values of regressors of the state process specification
 #'   (cannot be missing).
-#' @param nSImMfd Number of forward filtering runs; defaults to
-#'   \code{nSImMfd=1}.
-#' @param nSimJsd Number of backward smoothing runs; defaults to
-#'   \code{nSimJsd=1}.
+#' @param nSimMF Number of forward filtering runs; defaults to \code{nSimMF=1}.
+#' @param nSimPD Number of prediction runs; defaults to \code{nSimPD=1}.
+#' @param nSimMS Number of marginal smoothing runs; defaults to \code{nSimMS=1}.
+#' @param nSimJS Number of joint smoothing (backward simulation) runs; defaults
+#'   to \code{nSimJS=1}.
 #' @param computeMFD Logical: if \code{TRUE}, then the marginal filtering
-#'   density is computed.
+#'   density (means and variances) and \code{nSimMF} forward
+#'   filtering runs are computed and returned.
+#' @param computePRD Logical: if \code{TRUE}, then the prediction density
+#'   (means and variances) and \code{nSimPD} predictions are
+#    are computed and returned.
+#' @param computeMSD Logical: if \code{TRUE}, then the marginal smoothing
+#'   density (means and variances) and \code{nSimMS} marginal
+#'   smoothing runs are computed and returned.
 #' @param computeJSD Logical: if \code{TRUE}, then the joint smoothing density
-#'   is computed.
+#'   (means and variances) and \code{nSimJS} joint smoothing (i.e
+#'   backward simulation) runs are computed and returned.
+#' @param computeLLH Logical: if \code{TRUE}, then the log-likelihood (data
+#'   density) is returned.
 #'
 #' @return A named list of 4:
 #'   \itemize{
-#'     \item{\code{kfMarginalFilteringDensity:} list of length \code{nSImMfd}
+#'     \item{\code{kfMarginalFilteringDensity:} list of length \code{nSimMF}
 #'     with each element being one complete marginal filtering series.}
 #'     \item{\code{kfVCMmfd:} the marginal filtering VCM estimates i.e. the
 #'     \eqn{P_{t|t}} matrices, see \code{Details}.}
-#'     \item{\code{kfJointSmoothingDensity:} list of length \code{nSimJsd} with
+#'     \item{\code{kfJointSmoothingDensity:} list of length \code{nSimJS} with
 #'     each element being one complete joint smoothing density pass.}
 #'     \item{\code{kfVCMjsd:} the joint smoothing VCM estimates i.e. the
 #'     \eqn{J_{t|t}} matrices, i.e. see \code{Details}.}
@@ -107,10 +118,10 @@
 kfLGSSM <- function(yObs, uReg, wReg,
                     A, B, C, D, Q, R,
                     initX, initP, initU,
-                    nSImMfd = 1,
-                    nSimJsd = 1,
-                    computeMFD = TRUE,
-                    computeJSD = TRUE) {
+                    nSimMF = 1, nSimPD = 1, nSimMS = 1, nSimJS = 1,
+                    computeMFD = TRUE, computePRD = TRUE,
+                    computeMSD = TRUE, computeJSD = TRUE,
+                    computeLLH = TRUE) {
   TT   <- ncol(yObs)
   dimX <- nrow(yObs)
   A <- as.matrix(diag(A))
@@ -142,8 +153,8 @@ kfLGSSM <- function(yObs, uReg, wReg,
     xtt[, t] <- A %*% xtt[, t - 1] + B %*% uReg[, t - 1] + Kt %*% (yObs[, t] - C %*% (A %*% xtt[, t - 1] + B %*% uReg[, t - 1]) - D %*% wReg[, t])
   }
   if (computeMFD) {
-    kfMFDres <- rep(list(list()), times = nSImMfd)
-    for (n in 1:nSImMfd) {
+    kfMFDres <- rep(list(list()), times = nSimMF)
+    for (n in 1:nSimMF) {
       kfMFD <- matrix(0, ncol = TT, nrow = dimX)
       for (t in 1:TT) {
         kfMFD[, t] <- rmvnorm(1, mean = xtt[, t], sigma = Ptt[[t]])
@@ -152,8 +163,8 @@ kfLGSSM <- function(yObs, uReg, wReg,
     }
   }
   if (computeJSD) {
-    kfJSDout <- matrix(0, nrow = dimX*nSimJsd, ncol = TT)
-    for (n in 1:nSimJsd) {
+    kfJSDout <- matrix(0, nrow = dimX*nSimJS, ncol = TT)
+    for (n in 1:nSimJS) {
       Jtt <- rep(list(list()), times = TT)
       xttJSD <- matrix(0, nrow = dimX, ncol = TT)
       kfJSD  <- matrix(0, nrow = dimX, ncol = TT)

@@ -17,10 +17,15 @@ kfLGSSM(
   initX,
   initP,
   initU,
-  nSImMfd = 1,
-  nSimJsd = 1,
+  nSimMF = 1,
+  nSimPD = 1,
+  nSimMS = 1,
+  nSimJS = 1,
   computeMFD = TRUE,
-  computeJSD = TRUE
+  computePRD = TRUE,
+  computeMSD = TRUE,
+  computeJSD = TRUE,
+  computeLLH = TRUE
 )
 }
 \arguments{
@@ -65,26 +70,41 @@ latent states is used (see \code{Details}).}
 \item{initU}{Initial values of regressors of the state process specification
 (cannot be missing).}
 
-\item{nSImMfd}{Number of forward filtering runs; defaults to
-\code{nSImMfd=1}.}
+\item{nSimMF}{Number of forward filtering runs; defaults to \code{nSimMF=1}.}
 
-\item{nSimJsd}{Number of backward smoothing runs; defaults to
-\code{nSimJsd=1}.}
+\item{nSimPD}{Number of prediction runs; defaults to \code{nSimPD=1}.}
+
+\item{nSimMS}{Number of marginal smoothing runs; defaults to \code{nSimMS=1}.}
+
+\item{nSimJS}{Number of joint smoothing (backward simulation) runs; defaults
+to \code{nSimJS=1}.}
 
 \item{computeMFD}{Logical: if \code{TRUE}, then the marginal filtering
-density is computed.}
+density (means and variances) and \code{nSimMF} forward
+filtering runs are computed and returned.}
+
+\item{computePRD}{Logical: if \code{TRUE}, then the prediction density
+(means and variances) and \code{nSimPD} predictions are}
+
+\item{computeMSD}{Logical: if \code{TRUE}, then the marginal smoothing
+density (means and variances) and \code{nSimMS} marginal
+smoothing runs are computed and returned.}
 
 \item{computeJSD}{Logical: if \code{TRUE}, then the joint smoothing density
-is computed.}
+(means and variances) and \code{nSimJS} joint smoothing (i.e
+backward simulation) runs are computed and returned.}
+
+\item{computeLLH}{Logical: if \code{TRUE}, then the log-likelihood (data
+density) is returned.}
 }
 \value{
 A named list of 4:
   \itemize{
-    \item{\code{kfMarginalFilteringDensity:} list of length \code{nSImMfd}
+    \item{\code{kfMarginalFilteringDensity:} list of length \code{nSimMF}
     with each element being one complete marginal filtering series.}
     \item{\code{kfVCMmfd:} the marginal filtering VCM estimates i.e. the
     \eqn{P_{t|t}} matrices, see \code{Details}.}
-    \item{\code{kfJointSmoothingDensity:} list of length \code{nSimJsd} with
+    \item{\code{kfJointSmoothingDensity:} list of length \code{nSimJS} with
     each element being one complete joint smoothing density pass.}
     \item{\code{kfVCMjsd:} the joint smoothing VCM estimates i.e. the
     \eqn{J_{t|t}} matrices, i.e. see \code{Details}.}
