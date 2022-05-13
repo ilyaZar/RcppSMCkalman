@@ -115,13 +115,28 @@
 #'     \eqn{J_{t|t}} matrices, i.e. see \code{Details}.}
 #'   }
 #' @export
-kfLGSSM <- function(yObs, uReg, wReg,
-                    A, B, C, D, Q, R,
-                    initX, initP, initU,
+kfLGSSM <- function(yObs, uReg = NULL, wReg = NULL,
+                    A = NULL, B = NULL, C = NULL, D = NULL, Q = NULL, R = NULL,
+                    initX = NULL, initP = NULL, initU,
                     nSimMF = 1, nSimPD = 1, nSimMS = 1, nSimJS = 1,
                     computeMFD = TRUE, computePRD = TRUE,
                     computeMSD = TRUE, computeJSD = TRUE,
                     computeLLH = TRUE) {
+  # 0. Housekeeping and argument checks
+  # 0.1 infer dimension/length from system matrices and data
+  TT   <- ifelse(is.matrix(yObs), ncol(yObs), length(yObs))
+  dimY <- ifelse(is.matrix(yObs), nrow(yObs), 1)
+  dimX <- getDimX(initX, A, B, Q)
+  numU <- getNumReg(uReg)
+  numW <- getNumReg(wReg)
+  # 0.2 check for consistency of arguments: system matrices vs data dimensions
+  checkArgumentInputs(TT, dimY, dimX, numU, numW, # true reference for dimension
+                      yObs, uReg, wReg, # check all data for correct dimension
+                      A, B, C, D, Q, R, # check all system matrices for the same
+                      initX, initP, initU) # check all initial vals for the same
+  # 0.3 decide upon model dimensions (dimY, dimX, numU, numW) on dimensionCase
+
+  # 0.4 decide upon flags which computations to perform (smooth, filter, etc...)
   TT   <- ncol(yObs)
   dimX <- nrow(yObs)
   A <- as.matrix(diag(A))
@@ -136,6 +151,7 @@ kfLGSSM <- function(yObs, uReg, wReg,
   Lt      <- solve(tcrossprod(C, tcrossprod(C, Ptt1)) + R)
   Kt      <- Ptt1 %*% t(C) %*% Lt
 
+  # 1. Initialization
   Ptt[[1]]  <- Ptt1 - Kt %*% Lt %*% t(Kt)
   if (!matrixcalc::is.positive.definite(Ptt[[1]])) {
     stop(paste0("matrix is no longer p.d. at iteration number: ", 1))
@@ -184,4 +200,78 @@ kfLGSSM <- function(yObs, uReg, wReg,
   }
   return(list(kfMarginalFilteringDensity = kfMFDres, kfVCMmfd = Ptt,
               kfJointSmoothingDensity = kfJSDout, kfVCMjsd = Jtt))
+}
+getDimX <- function(initX, A, B, Q) {
+  if(!is.null(initX)) {
+    dimX <- length(initX)
+  } else if(!is.null(A)) {
+    dimX <- ifelse(is.matrix(A), nrow(A), 1)
+  } else if(!is.null(Q)) {
+    dimX <- ifelse(is.matrix(Q), nrow(Q), 1)
+  } else if(!is.null(B)) {
+    dimX <- ifelse(is.matrix(B), nrow(R), 1)
+  } else {
+    stop("Model miss-specified: can not infer state process dimension.")
+  }
+  return(dimX)
+}
+getNumReg <- function(reg) {
+  ifelse(test = is.matrix(reg),
+         yes  = nrow(reg),
+         no   = ifelse(is.null(reg), 0, 1))
+}
+checkArgumentInputs <- function(TT, dimY, dimX, numU, numW,
+                                yObs, uReg, wReg,
+                                A, B, C, D, Q, R,
+                                initX, initP, initU) {
+  ### check matching dimension/length for T
+  ## skip check for yObs since TT is inferred from measurement length/dim
+  ## check uReg series length
+  checkDim(TT, uReg, "col", "T", "U-type regressors")
+  ## check wReg series length
+  checkDim(TT, wReg, "col", "T", "W-type regressors")
+  ### check matching dimension/length for dimY
+  ## skip check for yObs since dimY is inferred from measurement length/dim
+  checkDim(dimY, wReg, "row", "dimY", "W-type regressors")
+  checkDim(dimY, C, "row", "dimY", "'C' matrix")
+  checkDim(dimY, D, "row", "dimY", "'D' matrix")
+  checkDim(dimY, R, "row", "dimY", "'R' matrix")
+  checkSym(R, "'R'")
+  ### check matching dimension/length for dimX
+  ## skip check for initX since dimX is inferred from state length/dim
+  checkDim(dimX, uReg, "row", "dimX", "U-type regressors")
+  checkDim(dimX, A, "row", "dimX", "'A' matrix")
+  checkSym(A, "'A'")
+  checkDim(dimX, B, "col", "dimX", "'B' matrix")
+  checkDim(dimX, Q, "col", "dimX", "'Q' matrix")
+  checkSym(Q, "'Q'")
+  checkDim(dimX, initP, "col", "dimX", "'initP' matrix")
+  ### check matching dimension/length for numU
+  checkDim(numU, uReg, "row", "numU", "U-type regressors")
+  checkDim(numU, B, "col", "numU", "'B' matrix")
+  msg <- paste("Initial values for U-type regressors 'initU' do not match",
+               "number of regressors derived from matrix B")
+  if(length(initU) != numU) stop(msg)
+  ### check matching dimension/length for numW
+  checkDim(numW, wReg, "row", "numW", "U-type regressors")
+  checkDim(numW, D, "col", "numW", "'D' matrix")
+}
+checkDim <- function(dim, mat, type = "row", nameDim, nameMat) {
+  if (!is.null(mat)) {
+    msg <- paste("Wrong dimension for", nameMat,
+                 ": does not match", nameDim, ".")
+    if (type == "row") {
+      checkMe <- ifelse(is.matrix(mat), nrow(mat), 1)
+    } else if (type == "col") {
+      checkMe <- ifelse(is.matrix(mat), ncol(mat), 1)
+    } else {
+      stop("Unknown check type: use only 'col' or 'row'.")
+    }
+    if (checkMe != dim) stop(msg)
+  }
+}
+checkSym <- function(mat, matName) {
+  msg <- paste(matName, "matrix must be symmetric.")
+  checkMe <- ((length(mat) %in% c(0, 1)) || nrow(mat) == ncol(mat))
+  if(!checkMe) stop(msg)
 }
