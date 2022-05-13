@@ -2,21 +2,21 @@
 % Please edit documentation in R/01_kf_FFBS.R
 \name{kfLGSSM}
 \alias{kfLGSSM}
-\title{Kalman forward filter and backward smoother.}
+\title{Kalman forward filtering, prediction and smoothing.}
 \usage{
 kfLGSSM(
   yObs,
-  uReg,
-  wReg,
-  A,
-  B,
-  C,
-  D,
-  Q,
-  R,
-  initX,
-  initP,
-  initU,
+  uReg = NULL,
+  wReg = NULL,
+  A = NULL,
+  B = NULL,
+  C = NULL,
+  D = NULL,
+  Q = NULL,
+  R = NULL,
+  initX = NULL,
+  initP = NULL,
+  initU = NULL,
   nSimMF = 1,
   nSimPD = 1,
   nSimMS = 1,
@@ -36,7 +36,7 @@ kfLGSSM(
  }
 If \code{Y} is a univariate process, \code{yObs} can be passed as a vector
 of length \code{T}. If \code{nrow(yObs) = 1}, then \code{yObs} becomes a
-vector of length \code{T}.}
+vector of length \code{T}. This argument can not be missing.}
 
 \item{uReg}{Matrix (vector) of regressors for the latent state process of
 dimension \code{ncol(B) x T}. For a single regressors \code{uReg} is a
@@ -111,10 +111,14 @@ A named list of 4:
   }
 }
 \description{
-The function runs a Kalman (exact) forward (marginal) filter, obtains
-predictions, and runs a full backward smoother; flags can control the amount
-of computation (e.g. only obtaining a forward filter, skipping the backward
-smoother).
+Under a Linear Gaussian State Space Model (LGSSM) specification, the function
+runs an (exact) Kalman forward (marginal) filter, obtains predictions,
+computes marginal and joint smoothing densities (the former sometimes
+referred to as the RST-smoother), and generates an unbiased estimate of the
+(log-)likelihood. \code{computeXXX}-flags control the amount of computation
+(e.g. only a forward filter and log-likelihood computations, but skipping
+prediction the smoothers), while \code{nSimXX} arguments set the number of
+simulation from above densities (if required).
 }
 \details{
 \subsection{Model specification}{
@@ -130,18 +134,21 @@ zero), and forward filtering, prediction and backward smoothing are run under
 this specification as usual.
 
 There can be an initial state (vector) value passed via \code{initX} as well
-as an initial "prediction" or VCM matrix at period \eqn{t=0} via
-\code{initP}, while an initial regressor (vector) value \code{initU} must be
-provided for initialization of the algorithm. If the former two are not
-provided, the stationary prior is used as a default initializer having the
-following form:
+as an initial "prediction" or VCM matrix at period \eqn{t=0} via \code{initP}
+for initialization of the algorithm. If these are not provided, the
+stationary prior is used as a default initializer having the following form:
 \deqn{x_0\sim\mathcal{N}\left(Bu_0(I-A)^{-1},\left(I-A\right)^{-1}Q
 \left[\left(I-A\right)^{-1}\right]^{\top}\right)\;,} where \eqn{I} is the
 identity matrix, and \eqn{u_0} is \code{initU}. In the univariate case
 (\code{length(initX) = 1}), the prior reduces to
 \eqn{x_0\sim\mathcal{N}\left(\frac{B\cdot u_0}{1-A},
 \frac{Q}{(1-A^2)}\right)}, and \eqn{B\cdot u_0} is the "dot" or scalar
-product if the corresponding number of \code{u}-type regressors \code{>1}.}
+product if the corresponding number of \code{u}-type regressors \code{>1}.
+
+Note that above specification requires an initial regressor (vector) value
+\code{initU} if \code{initX} is missing, but can be dropped if \code{initX}
+is provided.
+}
 
 \subsection{(Marginal) Filtering and prediciton - implemented recursions}{
 \enumerate{

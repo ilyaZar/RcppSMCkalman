@@ -1,9 +1,13 @@
-#' Kalman forward filter and backward smoother.
+#' Kalman forward filtering, prediction and smoothing.
 #'
-#' The function runs a Kalman (exact) forward (marginal) filter, obtains
-#' predictions, and runs a full backward smoother; flags can control the amount
-#' of computation (e.g. only obtaining a forward filter, skipping the backward
-#' smoother).
+#' Under a Linear Gaussian State Space Model (LGSSM) specification, the function
+#' runs an (exact) Kalman forward (marginal) filter, obtains predictions,
+#' computes marginal and joint smoothing densities (the former sometimes
+#' referred to as the RST-smoother), and generates an unbiased estimate of the
+#' (log-)likelihood. \code{computeXXX}-flags control the amount of computation
+#' (e.g. only a forward filter and log-likelihood computations, but skipping
+#' prediction the smoothers), while \code{nSimXX} arguments set the number of
+#' simulations from above densities (if required).
 #'
 #' @details
 #' \subsection{Model specification}{
@@ -19,18 +23,21 @@
 #' this specification as usual.
 #'
 #' There can be an initial state (vector) value passed via \code{initX} as well
-#' as an initial "prediction" or VCM matrix at period \eqn{t=0} via
-#' \code{initP}, while an initial regressor (vector) value \code{initU} must be
-#' provided for initialization of the algorithm. If the former two are not
-#' provided, the stationary prior is used as a default initializer having the
-#' following form:
+#' as an initial "prediction" or VCM matrix at period \eqn{t=0} via \code{initP}
+#' for initialization of the algorithm. If these are not provided, the
+#' stationary prior is used as a default initializer having the following form:
 #' \deqn{x_0\sim\mathcal{N}\left(Bu_0(I-A)^{-1},\left(I-A\right)^{-1}Q
 #' \left[\left(I-A\right)^{-1}\right]^{\top}\right)\;,} where \eqn{I} is the
 #' identity matrix, and \eqn{u_0} is \code{initU}. In the univariate case
 #' (\code{length(initX) = 1}), the prior reduces to
 #' \eqn{x_0\sim\mathcal{N}\left(\frac{B\cdot u_0}{1-A},
 #' \frac{Q}{(1-A^2)}\right)}, and \eqn{B\cdot u_0} is the "dot" or scalar
-#' product if the corresponding number of \code{u}-type regressors \code{>1}.}
+#' product if the corresponding number of \code{u}-type regressors \code{>1}.
+#'
+#' Note that above specification requires an initial regressor (vector) value
+#' \code{initU} if \code{initX} is missing, but can be dropped if \code{initX}
+#' is provided.
+#' }
 #'
 #' \subsection{(Marginal) Filtering and prediciton - implemented recursions}{
 #' \enumerate{
@@ -70,7 +77,7 @@
 #'   }
 #'  If \code{Y} is a univariate process, \code{yObs} can be passed as a vector
 #'  of length \code{T}. If \code{nrow(yObs) = 1}, then \code{yObs} becomes a
-#'  vector of length \code{T}.
+#'  vector of length \code{T}. This argument can not be missing.
 #' @param uReg Matrix (vector) of regressors for the latent state process of
 #'   dimension \code{ncol(B) x T}. For a single regressors \code{uReg} is a
 #'   vector of length \code{T}.
@@ -117,12 +124,14 @@
 #' @export
 kfLGSSM <- function(yObs, uReg = NULL, wReg = NULL,
                     A = NULL, B = NULL, C = NULL, D = NULL, Q = NULL, R = NULL,
-                    initX = NULL, initP = NULL, initU,
+                    initX = NULL, initP = NULL, initU = NULL,
                     nSimMF = 1, nSimPD = 1, nSimMS = 1, nSimJS = 1,
                     computeMFD = TRUE, computePRD = TRUE,
                     computeMSD = TRUE, computeJSD = TRUE,
                     computeLLH = TRUE) {
   # 0. Housekeeping and argument checks
+  if(missing(yObs)) stop("Measurements/Observations must be provided via yObs.")
+  checkIsMatrix(list("A" = A, "B" = B, "C" = C, "D" = D, "Q" = Q, "R" = R))
   # 0.1 infer dimension/length from system matrices and data
   TT   <- ifelse(is.matrix(yObs), ncol(yObs), length(yObs))
   dimY <- ifelse(is.matrix(yObs), nrow(yObs), 1)
@@ -134,11 +143,13 @@ kfLGSSM <- function(yObs, uReg = NULL, wReg = NULL,
                       yObs, uReg, wReg, # check all data for correct dimension
                       A, B, C, D, Q, R, # check all system matrices for the same
                       initX, initP, initU) # check all initial vals for the same
-  # 0.3 decide upon model dimensions (dimY, dimX, numU, numW) on dimensionCase
-
+  # 0.3 infer model dimension case from Y and X to speed up computation later
+  dimCase <- setDimCase(dimX, dimY, silent = FALSE)
   # 0.4 decide upon flags which computations to perform (smooth, filter, etc...)
-  TT   <- ncol(yObs)
-  dimX <- nrow(yObs)
+  cmpCase <- setCmpCase(computeMFD, computePRD,
+                        computeMSD, computeJSD,
+                        computeLLH)
+  # 1. Initialization
   A <- as.matrix(diag(A))
   B <- as.matrix(diag(B))
   C <- as.matrix(diag(C))
@@ -209,7 +220,7 @@ getDimX <- function(initX, A, B, Q) {
   } else if(!is.null(Q)) {
     dimX <- ifelse(is.matrix(Q), nrow(Q), 1)
   } else if(!is.null(B)) {
-    dimX <- ifelse(is.matrix(B), nrow(R), 1)
+    dimX <- ifelse(is.matrix(B), nrow(B), 1)
   } else {
     stop("Model miss-specified: can not infer state process dimension.")
   }
@@ -274,4 +285,37 @@ checkSym <- function(mat, matName) {
   msg <- paste(matName, "matrix must be symmetric.")
   checkMe <- ((length(mat) %in% c(0, 1)) || nrow(mat) == ncol(mat))
   if(!checkMe) stop(msg)
+}
+checkIsMatrix <- function(listOfMatrices) {
+  numMat <- length(listOfMatrices)
+  namMat <- names(listOfMatrices)
+  for (i in 1:numMat) {
+    if(isTRUE(is.null(listOfMatrices[[i]]))) next
+    msg <- paste0("Matrix '", namMat[i],
+                  "' is neither a matrix nor default NULL.")
+    if(isFALSE(is.matrix(listOfMatrices[[i]]))) stop(msg)
+  }
+}
+setDimCase <- function(dimX, dimY, silent = FALSE) {
+  if (dimX == 1 && dimY == 1) dimCase <- c("dimX=1 && dimY=1" = 1)
+  if (dimX  > 1 && dimY == 1) dimCase <- c("dimX>1 && dimY=1" = 2)
+  if (dimX == 1 && dimY >  1) dimCase <- c("dimX=1 && dimY>1" = 3)
+  if (dimX >  1 && dimY >  1) dimCase <- c("dimX>1 && dimY>1" = 4)
+  if(isTRUE(silent)) return(dimCase)
+  print(paste0("The following model dimensions are inferred: ",
+               names(dimCase), "."))
+  return(dimCase)
+}
+setCmpCase <- function(computeMFD, computePRD,
+                       computeMSD, computeJSD,
+                       computeLLH, silent = FALSE) {
+  if (isTRUE(computeMFD)) cmpCase <- ("Plain MFD computation" = 1)
+  if (isTRUE(computePRD)) cmpCase <- ("Plain PRD computation" = 2)
+  if (isTRUE(computeMSD)) cmpCase <- ("Plain MSD computation" = 3)
+  if (isTRUE(computeJSD)) cmpCase <- ("Plain JSD computation" = 4)
+  if (isTRUE(computeLLH)) cmpCase <- ("Plain LLH computation" = 5)
+  if(isTRUE(silent)) return(cmpCase)
+  print(paste0("The following computational task is inferred: ",
+               names(cmpCase), "."))
+  return(cmpCase)
 }

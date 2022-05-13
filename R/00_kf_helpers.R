@@ -90,8 +90,7 @@ dataGenLGSSM <- function(TT, dimX = 1, dimY = 1, numU = 0, numW = 0,
 
   setDefaultsIfNULL(dimX, dimY, numU, numW, A, B, C, D, Q, R)
   # Call helper function to check dimensions of user input args
-  checkDim(initX, initU, dimX, dimY, numU, numW, A, B, C, D, Q, R)
-
+  checkDimMatch(initX, initU, dimX, dimY, numU, numW, A, B, C, D, Q, R)
   # browser()
   # Simulate u-type regressors (those attached to the latent state process)
   uRegOut <- simulateRegsU(initU, numU = numU, TT = TT)
@@ -284,7 +283,8 @@ setDefaultsIfNULL <- function(dimX, dimY, numU, numW, A, B, C, D, Q, R,
   assign("Q", Q, envir = parent.frame())
   assign("R", R, envir = parent.frame())
 }
-checkDim <- function(initX, initU, dimX, dimY, numU, numW, A, B, C, D, Q, R) {
+checkDimMatch <- function(initX, initU, dimX, dimY, numU, numW,
+                          A, B, C, D, Q, R) {
   dimX <- as.integer(dimX)
   dimY <- as.integer(dimY)
   numU <- as.integer(numU)
