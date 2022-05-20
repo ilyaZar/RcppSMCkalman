@@ -8,7 +8,6 @@
 #' @inheritParams kfMFPD
 #' @inheritParams kfMSD
 #' @inheritParams kfLGSSM
-#' @param dimY integer specifying the dimension of the measurement process
 #' @param LOG logical; if \code{TRUE}, then the logarithm of the likelihood is
 #'   returned
 #'

@@ -34,7 +34,7 @@ vector of length \code{T}.}
 
 \item{dimX}{integer giving the dimension of the latent state process}
 
-\item{dimY}{integer specifying the dimension of the measurement process}
+\item{dimY}{integer giving the dimension of the measurement process}
 
 \item{TT}{integer giving the length of the time series}
 

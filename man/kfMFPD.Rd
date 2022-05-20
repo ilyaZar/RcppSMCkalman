@@ -41,6 +41,10 @@ vector of length \code{T}.}
 dimension \code{ncol(D) x T}. For a single regressors \code{wReg} is a
 vector of length \code{T}.}
 
+\item{dimX}{integer giving the dimension of the latent state process}
+
+\item{dimY}{integer giving the dimension of the measurement process}
+
 \item{TT}{integer giving the length of the time series}
 
 \item{x00}{see \code{initX} from \code{\link{kfLGSSM}}}

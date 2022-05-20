@@ -6,7 +6,6 @@
 #' \code{Details} section in \code{\link{kfLGSSM}}.
 #'
 #' @inheritParams kfMFPD
-#' @param dimX integer giving the dimension of the latent state process
 #' @param xtt forward filtering means as produced by \code{\link{kfMFPD}}
 #' @param Ptt forward filtering variances as produced by \code{\link{kfMFPD}}
 #' @param xtt1 predictive means as produced by \code{\link{kfMFPD}} (if

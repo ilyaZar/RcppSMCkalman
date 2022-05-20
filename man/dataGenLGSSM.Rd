@@ -119,4 +119,7 @@ number of \code{u}-type regressors \code{>1}.
 To run Kalman filtering, smoothing, prediction and likelihood
    computations, refer to \code{\link{kfLGSSM}} and the sub-functions
    therein.
+
+   To use real data that comes with this package: \code{data(IBMdata)}, see
+   \code{\link{IBMdata}}.
 }

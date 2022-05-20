@@ -250,29 +250,3 @@ checkDimMatch <- function(initX, initU, dimX, dimY, numU, numW,
   matchR <- identical(unique(dim(R)), dimY) || identical(length(Q), dimY)
   stopifnot(`Error VCM 'R' does not match 'Y' (measurement) dimension` = matchR)
 }
-# kflg <- function(yObs, A, C, Q, R, P00, x00, n_sim = 1) {
-#   TT    <- length(yObs)
-#   xStates  <- numeric(TT)
-#   Ptt  <- numeric(TT)
-#   # Ptt1    <- A %*% P00 %*% A  + Q
-#   Ptt1    <- tcrossprod(A, tcrossprod(A, P00))
-#   Lt <-
-#   Kt      <- Ptt1*C*(((C^2)*Ptt1 + R)^(-1))
-#   Ptt[1]  <- Ptt1 - Kt*C*Ptt1
-#   xStates[1]  <- A*x00 + Kt*(yObs[1] - C*A*x00)
-#   for (t in 2:TT) {
-#     Ptt1     <- (A^2)*Ptt[t - 1] + Q
-#     Kt     <- Ptt1*C*(((C^2)*Pttm + R)^(-1))
-#     Ptt[t] <- Ptt1 - Kt*C*Ptt1
-#     xStates[t] <- A*xStates[t - 1] + Kt*(yObs[t] - C*A*xStates[t - 1])
-#   }
-#   # KFapprox <- xStates
-#   res_sim <- matrix(0, ncol = TT, nrow = n_sim)
-#   for (n in 1:n_sim) {
-#     res_sim[n, ] <- rnorm(TT, mean = xStates, sd = sqrt(Ptt))
-#   }
-#   if (n_sim == 1) {
-#     res_sim <- as.vector(res_sim)
-#   }
-#   return(list(KFx = res_sim, KFvar = Ptt))
-# }

@@ -6,6 +6,8 @@
 #' \code{\link{kfLGSSM}}.
 #'
 #' @inheritParams kfLGSSM
+#' @param dimX integer giving the dimension of the latent state process
+#' @param dimY integer giving the dimension of the measurement process
 #' @param TT integer giving the length of the time series
 #' @param x00 see \code{initX} from \code{\link{kfLGSSM}}
 #' @param P00 see \code{initP} from \code{\link{kfLGSSM}}

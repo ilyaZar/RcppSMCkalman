@@ -83,6 +83,9 @@
 #'    computations, refer to \code{\link{kfLGSSM}} and the sub-functions
 #'    therein.
 #'
+#'    To use real data that comes with this package: \code{data(IBMdata)}, see
+#'    \code{\link{IBMdata}}.
+#'
 #' @export
 dataGenLGSSM <- function(TT, dimX = 1, dimY = 1, numU = 0, numW = 0,
                          A = NULL, B = NULL, C = NULL, D = NULL,

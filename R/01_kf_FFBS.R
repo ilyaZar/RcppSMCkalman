@@ -217,6 +217,9 @@
 #' @seealso If simulated data is required, the function
 #'   \code{\link{dataGenLGSSM}} can be used to simulate from a LGSSM.
 #'
+#'    To use real data that comes with this package: \code{data(IBMdata)}, see
+#'    \code{\link{IBMdata}}.
+#'
 #' @export
 kfLGSSM <- function(yObs,
                     uReg = NULL, wReg = NULL,
