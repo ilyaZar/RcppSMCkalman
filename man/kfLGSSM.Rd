@@ -2,7 +2,7 @@
 % Please edit documentation in R/01_kf_FFBS.R
 \name{kfLGSSM}
 \alias{kfLGSSM}
-\title{Kalman forward filtering, prediction and smoothing.}
+\title{Kalman forward filtering, prediction, smoothing and likelihood evaluation}
 \usage{
 kfLGSSM(
   yObs,
@@ -22,10 +22,10 @@ kfLGSSM(
   nSimMS = 1,
   nSimJS = 1,
   computeMFD = TRUE,
-  computePRD = TRUE,
-  computeMSD = TRUE,
-  computeJSD = TRUE,
-  computeLLH = TRUE
+  computePDD = FALSE,
+  computeMSD = FALSE,
+  computeJSD = FALSE,
+  computeLLH = FALSE
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ kfLGSSM(
  }
 If \code{Y} is a univariate process, \code{yObs} can be passed as a vector
 of length \code{T}. If \code{nrow(yObs) = 1}, then \code{yObs} becomes a
-vector of length \code{T}. This argument can not be missing.}
+vector of length \code{T}.}
 
 \item{uReg}{Matrix (vector) of regressors for the latent state process of
 dimension \code{ncol(B) x T}. For a single regressors \code{uReg} is a
@@ -54,9 +54,9 @@ vector of length \code{T}.}
 
 \item{D}{Parameter (or system) matrix of dimension \code{dimY x numW}.}
 
-\item{Q}{VCM of state process of dimension \code{dimX x dimX}.}
+\item{Q}{Error VCM of state process of dimension \code{dimX x dimX}.}
 
-\item{R}{VCM of measurement process of dimension \code{dimY x dimY}}
+\item{R}{Error VCM of measurement process of dimension \code{dimY x dimY}}
 
 \item{initX}{Initial value for state process. Think of \eqn{X_{t=0}} as a
 starting/initial condition for a time series running for \code{t=1,...,T}.
@@ -83,7 +83,7 @@ to \code{nSimJS=1}.}
 density (means and variances) and \code{nSimMF} forward
 filtering runs are computed and returned.}
 
-\item{computePRD}{Logical: if \code{TRUE}, then the prediction density
+\item{computePDD}{Logical: if \code{TRUE}, then the prediction density
 (means and variances) and \code{nSimPD} predictions are}
 
 \item{computeMSD}{Logical: if \code{TRUE}, then the marginal smoothing
@@ -100,27 +100,37 @@ density) is returned.}
 \value{
 A named list of 4:
   \itemize{
-    \item{\code{kfMarginalFilteringDensity:} list of length \code{nSimMF}
-    with each element being one complete marginal filtering series.}
-    \item{\code{kfVCMmfd:} the marginal filtering VCM estimates i.e. the
-    \eqn{P_{t|t}} matrices, see \code{Details}.}
-    \item{\code{kfJointSmoothingDensity:} list of length \code{nSimJS} with
-    each element being one complete joint smoothing density pass.}
-    \item{\code{kfVCMjsd:} the joint smoothing VCM estimates i.e. the
-    \eqn{J_{t|t}} matrices, i.e. see \code{Details}.}
+    \item{\code{kfMFDout:}} if \code{computeMFD=TRUE} the output produced by
+       \code{\link{kfMFPD}} with \code{PDSTORE=FALSE} (or \code{NULL} if
+       \code{computeMFD=FALSE})
+    \item{\code{kfMPDout:}} if \code{computePDD=TRUE} the output produced by
+       \code{\link{kfMFPD}} with \code{PDSTORE=TRUE} (or \code{NULL} if
+       \code{computePDD=FALSE})
+    \item{\code{kfMSDout:}} if \code{computeMSD=TRUE} the output produced by
+       \code{\link{kfMSD}} (or \code{NULL} if \code{computeMSD=FALSE})
+    \item{\code{kfJSDout:}} if \code{computeJSD=TRUE} the output produced by
+       \code{\link{kfJSD}} (or \code{NULL} if \code{computeJSD=FALSE})
+    \item {\code{kfLLHout:}} if \code{computeMFD=TRUE} the output produced by
+       \code{\link{kfLLH}} (or \code{NULL} if \code{computeMFD=FALSE})
   }
 }
 \description{
 Under a Linear Gaussian State Space Model (LGSSM) specification, the function
-runs an (exact) Kalman forward (marginal) filter, obtains predictions,
-computes marginal and joint smoothing densities (the former sometimes
-referred to as the RST-smoother), and generates an unbiased estimate of the
-(log-)likelihood. \code{computeXXX}-flags control the amount of computation
-(e.g. only a forward filter and log-likelihood computations, but skipping
-prediction the smoothers), while \code{nSimXX} arguments set the number of
-simulation from above densities (if required).
+runs an (exact) Kalman forward (marginal) filter, computes the prediction,
+marginal and joint smoothing densities (the former sometimes referred to as
+the RST-smoother), and generates an unbiased estimate of the
+(log-)likelihood.
 }
 \details{
+The amount of computation can be controlled via the \code{computeXXX}-flags
+(e.g. only a forward filter and log-likelihood computations, but skipping
+prediction the smoothers). If required the \code{nSimXX}-type arguments set
+the number of simulations from above densities; the defaults are set to 1,
+but if set to 0, then no simulation is performed and only the means and
+variances of the Gaussian distributions of the \code{computeXXX}-quantities
+are returned.
+
+
 \subsection{Model specification}{
 
 The specification of the LGSSM is of the following form:
@@ -150,7 +160,7 @@ Note that above specification requires an initial regressor (vector) value
 is provided.
 }
 
-\subsection{(Marginal) Filtering and prediciton - implemented recursions}{
+\subsection{(Marginal) Filtering and prediction - implemented recursions}{
 \enumerate{
   \item {\code{For }\eqn{t=0:} \code{compute} \eqn{\hat{x}_{0|0}}
   and \eqn{\hat{x}_{0|0}} \code{according to:}
@@ -161,23 +171,102 @@ is provided.
   \item {\code{For }\eqn{t=1,\ldots,T:} \code{compute:}
     \itemize{
       \item \eqn{K_t} and \eqn{L_t}
-      \deqn{K_t = \hat{P}_{t|t-1} C^{\top} = \left(A\hat{P}_{t-1|t-1}
-       A^{\top} + Q\right) C^{\top}}
-      \deqn{L_t = \left[C\hat{P}_{t|t-1} C^{\top} + R\right]^{-1} =
-      \left[C \left(A\hat{P}_{t-1|t-1} A^{\top} + Q\right) C^{\top} +
-      R\right]^{-1}}
+      \deqn{K_t = \hat{P}_{t|t-1} C^{\top} }
+      \deqn{L_t = \left[C\hat{P}_{t|t-1} C^{\top} + R\right]^{-1}}
+     with \eqn{\hat{x}_{t|t-1}} and \eqn{\hat{P}_{t|t-1}} as specified
+     below under \code{prediction}.
       \item \code{for marginal filtering:}
        \deqn{\hat{x}_{t|t} = \hat{x}_{t|t-1} + K_tL_t
-       \left(y_t - C\hat{x}_{t|t-1}-Dw_t\right) = A\hat{x}_{t-1|t-1} +
-       Bu_{t-1} + K_tL_t\left(y_t -C\left[A\hat{x}_{t-1|t-1} + Bu_{t-1}
-       \right]-Dw_t\right)}
-       \deqn{\hat{P}_{t|t} = \hat{P}_{t|t-1} - K_t L_t K_t^{\top} =
-       A\hat{P}_{t-1|t-1} A^{\top} + Q - K_t L_t K_t^{\top}}
-      \item \code{for prediction:}
+       \left(y_t - C\hat{x}_{t|t-1}-Dw_t\right)}
+       \deqn{\hat{P}_{t|t} = \hat{P}_{t|t-1} - K_t L_t K_t^{\top}}
+       with \eqn{\hat{x}_{t|t-1}} and \eqn{\hat{P}_{t|t-1}} as specified
+        below under \code{prediction}.
+     \item \code{for prediction:}
       \deqn{\hat{P}_{t|t-1} = A\hat{P}_{t-1|t-1} A^{\top} + Q}
       \deqn{\hat{x}_{t|t-1} = A\hat{x}_{t-1|t-1} + Bu_{t-1}}
       }
   }
 }
+These recursions are implemented in \code{\link{kfMFPD}}.
 }
+\subsection{Marginal smoothing - implemented recursions}{
+ To obtain the marginal smoothing densities
+\eqn{p\left(x_t|y_{1:T}\right)\forall t=1,\ldots,T} a complete Kalman forward
+filtering and prediction pass is needed. The marginal smoothing density for
+period \eqn{T} equals the marginal filtering density for the same period,
+i.e. after the Kalman filtering and prediction pass \eqn{x_{T|T}} and
+\eqn{P_{T|T}} for \eqn{p\left(x_T|y_{1:T}\right)} are already given. To
+compute the other marginals, the following recursion is run backwards in
+time:
+
+\code{For }\eqn{t=T-1, \ldots,1}\code{ compute:}
+ \enumerate{
+   \item \eqn{J_t=P_{t|t}A^{\top}P_{t|t-1}^{-1}}
+   \item \eqn{\hat{x}_{t|T}=\hat{x}_{t|t} + J_t \left(\hat{x}_{t+1|T}-
+   \hat{x}_{t+1|t}\right)}
+   \item \eqn{\hat{P}_{t|T}=\hat{P}_{t|t} + J_t\left(\hat{x}_{t+1|T} -
+   \hat{x}_{t+1|t}\right)J_t^{\top}}
+ }
+
+Each marginal smoothing density is then given via
+\eqn{p\left(x_t|y_{t:T}\right)=\mathcal{N}\left(x_t|\hat{x}_{t|T},
+\hat{P}_{t|T}\right)}.
+
+These recursions are implemented in \code{\link{kfMSD}}.
+
+}
+\subsection{Joint smoothing density- implemented backward simulation
+recursions}{
+  Backward simulation is a strategy for generating realizations of a whole
+  trajectory \eqn{\tilde{x}_{0:T}} from the joint smoothing density
+  \eqn{p\left(x_{0:T}|y_{1:}\right)}:
+  \itemize{
+  \item \code{Draw nSimJSD samples from} \deqn{\tilde{x}_T\sim
+  p\left(x_T|y_{1:T}\right)=\mathcal{N}\left(x_T|\hat{x}_{T|T}|P_{T:T}\right)}
+  i.e. from the last iteration of the forward filter.
+  \item \code{Draw nSimJSD samples from backwards in time for}
+  \eqn{t=T-1,\ldots,0}:
+  \deqn{\tilde{x}_t\sim p\left(x_t|\tilde{x}_{t+1},y_{1:t}\right)
+  =\mathcal{N}\left(x_t|\hat{\mu}_{t},L_t\right)}}
+  with means and variances obtained
+  via the following recursions:
+  \itemize{
+    \item \eqn{J_t=\hat{P}_{t|t}A^{\top}\left(A\hat{P}_{t|t}A^{\top} +
+    Q\right)^{-1}}
+    \item \eqn{\mu_t=\hat{x}_{t|t} + J_t \left(x_{t+1} - Bu_t -A\hat{x}_{t|t}
+    \right)}
+    \item \eqn{L_t=\hat{P}_{t|t} - J_t A\hat{P}_{t|t}}
+  }
+
+ After a complete backward sweep, the \code{nSimJSD} backward trajectories
+ \eqn{\tilde{x}_{0:T}^{nSimJS}} are (by construction) a realization from the
+  above joint smoothing density. These recursions are implemented in
+  \code{\link{kfJSD}}.
+
+}
+\subsection{Data distribution - observed likelihood computation}{
+  The data likelihood (if logarithmized also sometimes simply referred to as
+  the log-likelihood), with \eqn{\theta=A, B, C, D, P, Q}, is defined as
+  \deqn{p\left(y_{1:T}|\theta\right)\prod_{t=1}^{T} \int p\left(y_t|
+  \theta,x_t\right)p\left(x_t|y_{t:(t-1)}\right)dx_t=\mathcal{N}
+  \left(y_t|C\hat{x}_{t|t-1}+Dw_t, C\hat{P}_{t|t-1}C^{\top} + R\right)}
+  with the logarithmic version given as
+  \deqn{\log p\left(y_{1:T}\right) =
+  \sum_{t=1}^T\log\left(\mathcal{N}
+  \left(y_t|C\hat{x}_{t|t-1}+Dw_t, C\hat{P}_{t|t-1}C^{\top} + R\right)\right)
+  =
+  -\frac{Tn_y}{2}\log\left(2\pi\right) + \sum_{t=1}^T
+  \left(-\frac{1}{2} \log\det\lbrace\Lambda_t\rbrace -
+  \frac{1}{2} \left(y_t-C\hat{x}_{t|t-1}-Dw_t\right)
+  \Lambda_t^{-1}
+  \left(y_t-C\hat{x}_{t|t-1}-Dw_t\right)^{\top}
+   \right)
+  }
+with \eqn{\Lambda_t = C\hat{P}_{t|t-1}C^{\top} + R}. These computations are
+implemented in \code{\link{kfLLH}}.
+}
+}
+\seealso{
+If simulated data is required, the function
+  \code{\link{dataGenLGSSM}} can be used to simulate from a LGSSM.
 }
