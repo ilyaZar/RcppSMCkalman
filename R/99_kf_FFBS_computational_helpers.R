@@ -17,7 +17,7 @@ initializeX00 <- function(initX, initU, A, B, dimX) {
                     B %*% initU)
     I   <- diag(dimX)
     x00 <- BuReg %*% solve(I - A)
-  } <-
+  }
   return(x00)
 }
 initializeP00 <- function(initP, A, Q, dimX) {

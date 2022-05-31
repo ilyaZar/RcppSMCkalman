@@ -5,8 +5,6 @@
 #' @section Missing section.
 #'
 #  RcppSMCkalman namespace: start
-#' @useDynLib RcppSMCkalman, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
 #' @importFrom stats "rnorm"
 #' @importFrom mvtnorm "rmvnorm"
 #' @importFrom matrixcalc "is.positive.definite"
