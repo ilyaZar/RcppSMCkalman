@@ -194,18 +194,18 @@ These recursions are implemented in \code{\link{kfMFPD}}.
 \eqn{p\left(x_t|y_{1:T}\right)\forall t=1,\ldots,T} a complete Kalman forward
 filtering and prediction pass is needed. The marginal smoothing density for
 period \eqn{T} equals the marginal filtering density for the same period,
-i.e. after the Kalman filtering and prediction pass \eqn{x_{T|T}} and
-\eqn{P_{T|T}} for \eqn{p\left(x_T|y_{1:T}\right)} are already given. To
+i.e. after the Kalman filtering and prediction pass \eqn{\hat{x}_{T|T}} and
+\eqn{\hat{P}_{T|T}} for \eqn{p\left(x_T|y_{1:T}\right)} are already given. To
 compute the other marginals, the following recursion is run backwards in
 time:
 
 \code{For }\eqn{t=T-1, \ldots,1}\code{ compute:}
  \enumerate{
-   \item \eqn{J_t=P_{t|t}A^{\top}P_{t|t-1}^{-1}}
+   \item \eqn{J_t=\hat{P}_{t|t}A^{\top}\hat{P}_{t+1|t}^{-1}}
    \item \eqn{\hat{x}_{t|T}=\hat{x}_{t|t} + J_t \left(\hat{x}_{t+1|T}-
    \hat{x}_{t+1|t}\right)}
-   \item \eqn{\hat{P}_{t|T}=\hat{P}_{t|t} + J_t\left(\hat{x}_{t+1|T} -
-   \hat{x}_{t+1|t}\right)J_t^{\top}}
+   \item \eqn{\hat{P}_{t|T}=\hat{P}_{t|t} + J_t\left(\hat{P}_{t+1|T} -
+   \hat{P}_{t+1|t}\right)J_t^{\top}}
  }
 
 Each marginal smoothing density is then given via

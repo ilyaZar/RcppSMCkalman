@@ -39,10 +39,10 @@ kfMSD <- function(dimX, TT,
   Jtt[, , TT] <- matrix(0, dimX, dimX)
   # 2. Iteration: t = T-1,...,1
   for (t in (TT - 1):1) {
-    Jtt[, , t] <- tcrossprod(Ptt[, , t], A) %*% solve(PtT[, , t + 1])
+    Jtt[, , t] <- tcrossprod(Ptt[, , t], A) %*% solve(Ptt1[, , t + 1])
     matGain    <- PtT[, , t + 1] - Ptt1[, , t + 1]
     PtT[, , t] <- Ptt[, , t] + Jtt[, , t] %*% tcrossprod(matGain, Jtt[, , t])
-    xtT[, t]   <- xtt[, t] + Jtt[, , t] %*% xtT[, t + 1] - xtt1[, t + 1]
+    xtT[, t]   <- xtt[, t] + Jtt[, , t] %*% (xtT[, t + 1] - xtt1[, t + 1])
   }
   return(list(msdEXP = xtT, msdVAR = PtT))
 }
