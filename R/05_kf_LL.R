@@ -14,7 +14,7 @@
 #' @return the (logarithmic, if \code{LOG=TRUE}) value of the data likelihood
 #' @export
 kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
-  DwReg <- computeMatReg(mat = D, reg = wReg, dim = dimX, lenT = TT)
+  DwReg <- computeMatReg(mat = D, reg = wReg, dim = dimY, lenT = TT)
   part1 <- -TT*dimY/2 * log(2*pi)
   part2 <- 0
 
@@ -24,8 +24,7 @@ kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
     logDetVarY <- determinant(VarY, logarithm = TRUE)$modulus[1]
 
     part2 <- part2 + logDetVarY
-    part2 <- part2 + (yObs[, t] - meanY) %*% tcrossprod(solve(VarY),
-                                                        (yObs[, t] - meanY))
+    part2 <- part2 + t(yObs[, t] - meanY) %*% solve(VarY) %*% (yObs[, t] - meanY)
   }
   llOUT <- part1 - 0.5 * part2
   if(isFALSE(LOG)) {
