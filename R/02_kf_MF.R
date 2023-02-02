@@ -71,7 +71,7 @@ kfMFPD <- function(yObs, uReg, wReg,
     # period t quantities for current iteration
     kGain      <- computekG(yObs[, t], C, xtt1, DwReg[, t])
     xtt[, t]   <- computeXtt(xtt1, Kt, Lt, kGain)
-    Ptt[, , t] <- computePtt(Ptt1, Kt, Lt, t)
+    Ptt[, , t] <- computePtt(Ptt1, Kt, Lt, C, R, t)
 
     xtt1 <- computeXtt1(A[, ,t+1], xtt[, t], BuReg[, t], dimX)
     Ptt1 <- computePtt1(A[, ,t+1], Ptt[, , t], Q[, ,t+1])
