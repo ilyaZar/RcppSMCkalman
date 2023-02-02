@@ -61,11 +61,16 @@ computekG <- function(yObs, C, xtt1, DwReg) {
 computeXtt <- function(xtt1, Kt, Lt, kGain) {
   xtt1 + Kt %*% Lt %*% kGain
 }
-computePtt <- function(Ptt1, Kt, Lt, t) {
-  Ptt <- Ptt1 - Kt %*% tcrossprod(Lt, Kt)
-  if (!matrixcalc::is.positive.definite(Ptt)) {
-    stop(paste0("matrix is no longer p.d. at iteration number: ", t))
-  }
+computePtt <- function(Ptt1, Kt, Lt, C, R, t) {
+  #Ptt <- Ptt1 - Kt %*% tcrossprod(Lt, Kt)
+  I <- diag(dim(Ptt1)[1])
+  KL <- Kt %*% Lt
+  IKLC <- I - KL %*% C
+  Ptt <- IKLC %*% tcrossprod(Ptt1, IKLC) + KL %*% tcrossprod(R, KL)
+
+  # if (!matrixcalc::is.positive.definite(Ptt)) {
+  # stop(paste0("matrix is no longer p.d. at iteration number: ", t))
+  # }
   return(Ptt)
 }
 computeJtt2 <- function(Ptt, A , Q) {
