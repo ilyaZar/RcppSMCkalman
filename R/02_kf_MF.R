@@ -59,8 +59,8 @@ kfMFPD <- function(yObs, uReg, wReg,
   BuReg     <- computeMatReg(mat = B, reg = uReg, dim = dimX, lenT = TT)
   DwReg     <- computeMatReg(mat = D, reg = wReg, dim = dimY, lenT = TT)
 
-  xtt1 <- computeXtt1(A[, ,1], x00, BuRegInit[, 1], dimX)
-  Ptt1 <- computePtt1(A[, ,1], P00, Q[, ,1])
+  xtt1 <- computeXtt1(A, x00, BuRegInit[, 1], dimX)
+  Ptt1 <- computePtt1(A, P00, Q)
   if (isTRUE(PDSTORE)) {
     xtt1STORE[, 1]   <- xtt1
     Ptt1STORE[, , 1] <- Ptt1
