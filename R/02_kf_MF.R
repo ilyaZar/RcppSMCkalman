@@ -50,6 +50,8 @@ kfMFPD <- function(yObs, uReg, wReg,
   xtt <- matrix(0, nrow = dimX, ncol = TT)
   Ptt <- array(0, dim = c(dimX, dimX, TT),
                dimnames = list(NULL, NULL, as.character(1:TT)))
+
+
   if (isTRUE(PDSTORE)) {
     xtt1STORE <- matrix(0, nrow = dimX, ncol = TT + 1)
     Ptt1STORE <- array(0, dim = c(dimX, dimX, TT + 1),
@@ -61,17 +63,31 @@ kfMFPD <- function(yObs, uReg, wReg,
 
   xtt1 <- computeXtt1(A, x00, BuRegInit[, 1], dimX)
   Ptt1 <- computePtt1(A, P00, Q)
+
   if (isTRUE(PDSTORE)) {
     xtt1STORE[, 1]   <- xtt1
     Ptt1STORE[, , 1] <- Ptt1
   }
-  Lt   <- computeLt(C, Ptt1, R)
-  Kt   <- computeKt(Ptt1, C)
+
   for(t in 1:TT) {
+    MissingObs <- which(is.na(yObs[, t]))
+    W <- diag(dimY)
+    if(length(MissingObs) != 0){
+      yObs[MissingObs, t] <- 0
+      W <- W[-MissingObs,]
+    }
+
+    CAdj <- W %*% C
+    RAdj <- W %*% R %*% t(W)
+
+    Lt   <- computeLt(CAdj, Ptt1, RAdj)
+    Kt   <- computeKt(Ptt1, CAdj)
+
     # period t quantities for current iteration
-    kGain      <- computekG(yObs[, t], C, xtt1, DwReg[, t])
+    kGain      <- computekG(W %*% yObs[, t], CAdj, xtt1, W %*% DwReg[, t])
     xtt[, t]   <- computeXtt(xtt1, Kt, Lt, kGain)
-    Ptt[, , t] <- computePtt(Ptt1, Kt, Lt, C, R, t)
+    Ptt[, , t] <- computePtt(Ptt1, Kt, Lt, CAdj, RAdj, t)
+
     xtt1 <- computeXtt1(A, xtt[, t], BuReg[, t], dimX)
     Ptt1 <- computePtt1(A, Ptt[, , t], Q)
 
@@ -80,8 +96,7 @@ kfMFPD <- function(yObs, uReg, wReg,
       xtt1STORE[, t + 1]   <- xtt1
       Ptt1STORE[, , t + 1] <- Ptt1
     }
-    Lt   <- computeLt(C, Ptt1, R)
-    Kt   <- computeKt(Ptt1, C)
+
   }
   if (PDSTORE) {
     out <- list(mfdEXP = xtt, mfdVAR = Ptt,
