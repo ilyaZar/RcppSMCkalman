@@ -70,21 +70,32 @@ kfMFPD <- function(yObs, uReg, wReg,
   }
 
   for(t in 1:TT) {
-    MissingObs <- which(is.na(yObs[, t]))
-    W <- diag(dimY)
-    if(length(MissingObs) != 0){
-      yObs[MissingObs, t] <- 0
-      W <- W[-MissingObs,]
-    }
+    CAdj <- C
+    RAdj <- R
+    yObsAdj <- yObs[, t]
+    DwRegAdj <- DwReg[, t]
+    MissingObs <- which(is.na(yObsAdj))
 
-    CAdj <- W %*% C
-    RAdj <- W %*% R %*% t(W)
+    if(length(MissingObs) != 0){
+      W <- diag(dimY)
+      W <- W[-MissingObs, ]
+
+      yObsAdj[MissingObs] <- 0
+      CAdj[MissingObs, ] <- 0
+      RAdj[MissingObs, ] <- 0
+      RAdj[ ,MissingObs] <- 0
+
+      CAdj <- W %*% CAdj
+      RAdj <- W %*% RAdj %*% t(W)
+      yObsAdj <- W %*% yObsAdj
+      DwRegAdj <- W %*% DwRegAdj
+    }
 
     Lt   <- computeLt(CAdj, Ptt1, RAdj)
     Kt   <- computeKt(Ptt1, CAdj)
 
     # period t quantities for current iteration
-    kGain      <- computekG(W %*% yObs[, t], CAdj, xtt1, W %*% DwReg[, t])
+    kGain      <- computekG(yObsAdj, CAdj, xtt1, DwRegAdj)
     xtt[, t]   <- computeXtt(xtt1, Kt, Lt, kGain)
     Ptt[, , t] <- computePtt(Ptt1, Kt, Lt, CAdj, RAdj, t)
 
