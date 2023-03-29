@@ -19,12 +19,34 @@ kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
   part2 <- 0
 
   for (t in 1:TT) {
-    meanY      <- C %*% xtt1[, t] + DwReg[, t]
-    VarY       <- C %*% tcrossprod(Ptt1[, , t], C) + R
+    CAdj <- C
+    RAdj <- R
+    yObsAdj <- yObs[, t]
+    DwRegAdj <- DwReg[, t]
+    MissingObs <- which(is.na(yObsAdj))
+
+    if(length(MissingObs) != 0){
+      W <- diag(dimY)
+      W <- W[-MissingObs, ]
+
+      yObsAdj[MissingObs] <- 0
+      CAdj[MissingObs, ] <- 0
+      RAdj[MissingObs, ] <- 0
+      RAdj[ ,MissingObs] <- 0
+
+      CAdj <- W %*% CAdj
+      RAdj <- W %*% RAdj %*% t(W)
+      yObsAdj <- W %*% yObsAdj
+      DwRegAdj <- W %*% DwRegAdj
+    }
+
+    meanY      <- CAdj %*% xtt1[, t] + DwRegAdj
+    VarY       <- CAdj %*% tcrossprod(Ptt1[, , t], CAdj) + RAdj
     logDetVarY <- determinant(VarY, logarithm = TRUE)$modulus[1]
 
     part2 <- part2 + logDetVarY
-    part2 <- part2 + t(yObs[, t] - meanY) %*% solve(VarY) %*% (yObs[, t] - meanY)
+    part2 <- part2 + t(yObsAdj - meanY) %*% solve(VarY) %*% (yObsAdj - meanY)
+
   }
   llOUT <- part1 - 0.5 * part2
   if(isFALSE(LOG)) {
