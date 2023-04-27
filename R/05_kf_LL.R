@@ -20,7 +20,7 @@ kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
 
   for (t in 1:TT) {
     CAdj <- C
-    RAdj <- R
+    RAdj <- R[, , t]
     yObsAdj <- yObs[, t]
     DwRegAdj <- DwReg[, t]
     MissingObs <- which(is.na(yObsAdj))
