@@ -45,7 +45,7 @@ computePtt1 <- function(A, Ptt, Q) {
 computeLt <- function(C, Ptt1, R) {
   #solve(C %*% tcrossprod(Ptt1, C) + R)
   R <- 0.5*(R + t(R))
-  R_inv <- ifelse(diag(diag(R)) == R, diag(1 / diag(R)), solve(R))
+  R_inv <- solve(R)
   P <- Ptt1
   P <- 0.5*(P + t(P))
   P_inv <- solve(P)
