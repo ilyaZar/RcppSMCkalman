@@ -71,7 +71,11 @@ kfMFPD <- function(yObs, uReg, wReg,
 
   for(t in 1:TT) {
     CAdj <- C
-    RAdj <- R[, , t]
+    if(is.na(dim(R)[3])){
+      RAdj <- R
+    }else{
+      RAdj <- R[, , t]
+    }
     yObsAdj <- yObs[, t]
     DwRegAdj <- DwReg[, t]
     MissingObs <- which(is.na(yObsAdj))
