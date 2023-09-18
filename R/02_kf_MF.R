@@ -70,9 +70,9 @@ kfMFPD <- function(yObs, uReg, wReg,
     Ptt1STORE[, , 1] <- Ptt1
   }
 
-  AllObsMissing <- FALSE
 
   for(t in 1:TT) {
+    AllObsMissing <- FALSE
     CAdj <- C
     if(is.na(dim(R)[3])){
       RAdj <- R
