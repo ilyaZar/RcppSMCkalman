@@ -15,11 +15,10 @@
 #' @export
 kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
   DwReg <- computeMatReg(mat = D, reg = wReg, dim = dimY, lenT = TT)
-  # part1 <- -TT*dimY/2 * log(2*pi)
   part2 <- 0
 
   AllObsMissing <- FALSE
-  NumAllMissings <- 0
+  MissingsObsTotal <- sum(is.na(yObs))
 
   for (t in 1:TT) {
     CAdj <- C
@@ -31,7 +30,6 @@ kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
     if(length(MissingObs) != 0) {
       if (length(MissingObs) == dimY) {
         AllObsMissing <- TRUE
-        NumAllMissings <- NumAllMissings + 1
       } else {
         W <- diag(dimY)
         W <- W[-MissingObs, ]
@@ -56,15 +54,9 @@ kfLLH <- function(yObs, wReg, xtt1, Ptt1, C, D, R, dimX, dimY, TT, LOG = TRUE) {
       part2 <- part2 + logDetVarY
       part2 <- part2 + t(yObsAdj - meanY) %*% solve(VarY) %*% (yObsAdj - meanY)
     }
-    # meanY      <- C %*% xtt1[, t] + DwReg[, t]
-    # VarY       <- C %*% tcrossprod(Ptt1[, , t], C) + R
-    # logDetVarY <- determinant(VarY, logarithm = TRUE)$modulus[1]
-    #
-    # part2 <- part2 + logDetVarY
-    # part2 <- part2 + t(yObs[, t] - meanY) %*% solve(VarY) %*% (yObs[, t] - meanY)
   }
 
-  part1 <- -(TT - NumAllMissings) *dimY/2 * log(2*pi)
+  part1 <- -(TT*dimY - MissingsObsTotal) /2 * log(2*pi)
 
   llOUT <- part1 - 0.5 * part2
   if(isFALSE(LOG)) {
