@@ -236,8 +236,8 @@ kfLGSSM <- function(yObs,
   # 0. Housekeeping and argument checks
   if(missing(yObs)) stop("Measurements/Observations must be provided via yObs.")
   if(is.vector(yObs)) yObs <- matrix(yObs, nrow = 1)
-  checkIsMatrix(list("yObs" = yObs, "A" = A, "B" = B, "C" = C, "D" = D,
-                     "Q" = Q, "R" = R))
+  #checkIsMatrix(list("yObs" = yObs, "A" = A, "B" = B, "C" = C, "D" = D,
+  #                   "Q" = Q, "R" = R))
   out = list()
   # 0.1 infer dimension/length from system matrices and data
   TT   <- ifelse(is.matrix(yObs), ncol(yObs), length(yObs))
@@ -246,10 +246,10 @@ kfLGSSM <- function(yObs,
   numU <- getNumReg(uReg)
   numW <- getNumReg(wReg)
   # 0.2 check for consistency of arguments: system matrices vs data dimensions
-  checkArgumentInputs(TT, dimY, dimX, numU, numW, # true reference for dimension
-                      yObs, uReg, wReg, # check all data for correct dimension
-                      A, B, C, D, Q, R, # check all system matrices for the same
-                      initX, initP, initU) # check all initial vals for the same
+ # checkArgumentInputs(TT, dimY, dimX, numU, numW, # true reference for dimension
+ #                    yObs, uReg, wReg, # check all data for correct dimension
+ #                   A, B, C, D, Q, R, # check all system matrices for the same
+ #                  initX, initP, initU) # check all initial vals for the same
   # 0.3 infer model dimension case from Y and X to speed up computation later
   dimCase <- setDimCase(dimX, dimY, silent = FALSE)
   # 0.4 decide upon flags which computations to perform (smooth, filter, etc...)
